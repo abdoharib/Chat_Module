@@ -14,7 +14,8 @@ describe('AddMessage Lambda Test', () => {
                 })
             ).toHaveProperty("statusCode", 200);
         })
-
+        
+        /*
         test('Valid Parameter Missing Content ( optional )', async () => {
             expect(
                 await handler({
@@ -42,6 +43,7 @@ describe('AddMessage Lambda Test', () => {
                 })
             ).toHaveProperty("statusCode", 500);
         }) 
+
         test('Missing User ID', async () => {
             expect(
                 await handler({
@@ -50,6 +52,7 @@ describe('AddMessage Lambda Test', () => {
                 })
             ).toHaveProperty("statusCode", 500);
         }) 
+        */
     })
     
 })
