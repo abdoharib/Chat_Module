@@ -3,6 +3,8 @@ const Pipeline = require("../../lib/Middleware/index");
 const AddMsg = require("../../lib/helpers/message/add_msg")
 const SendMsg = require("../../lib/helpers/message/send_msg")
 const axios = require("axios").default
+// For Testing
+const type = "user"
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
 function AddMessage_config_haneler(){
@@ -15,7 +17,7 @@ function AddMessage_config_haneler(){
               return Auth[RuleName].rules;
           }
       }
-      return []
+      throw "You Shall Not Pass  ✋🛑"
   }
 }
 
@@ -44,8 +46,7 @@ const { push, execute } = Pipeline(
 );
 
 
-// For Testing
-const type = "user"
+
 
 exports.handler = async (event) => {
 

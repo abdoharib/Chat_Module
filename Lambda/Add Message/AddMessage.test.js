@@ -9,7 +9,7 @@ describe('AddMessage Lambda Test', () => {
             expect(
                 await handler({
                     content: 'heasfasfasfllo',
-                    userID: '19484',
+                    userID: '19485',
                     roomID: '2224',
                 })
             ).toHaveProperty("statusCode", 200);

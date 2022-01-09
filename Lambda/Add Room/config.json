@@ -1,0 +1,8 @@
+{
+	"Auth": {
+		"RuleAdmin": {
+			"type": [ "admin" ],
+			"rules": []
+		}
+	}
+}

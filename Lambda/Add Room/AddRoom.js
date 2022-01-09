@@ -2,6 +2,10 @@ const config = require("./config.json");
 const Pipeline = require("../../lib/Middleware/index");
 const AddRoom = require("../../lib/helpers/room/add_room")
 const axios = require("axios").default
+// For Testing
+
+const type = "admin"
+
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
 function AddRoom_config_haneler(){
@@ -10,22 +14,24 @@ function AddRoom_config_haneler(){
       if(!Auth) throw "Invalid AddRoom Config file Format !!";
       
       for (const RuleName in Auth) {
-          if(Auth[RuleName].type.indexOf(type) >= 0){
+          if(Auth[RuleName].type.indexOf(type) >= 0 || Auth[RuleName].type.indexOf("*") >= 0 ){
               return Auth[RuleName].rules;
           }
       }
-      return []
+      throw "You Shall Not Pass  ✋🛑"
   }
 }
 
 
 // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
-//add message pipeline
+//add room pipeline
 const { push, execute } = Pipeline(
 
+  
   // 1
   // adding the room to dynamo
   async (ctx) => {
+
     let room_added = await AddRoom.execute( ctx )
 
     return room_added;
@@ -36,8 +42,7 @@ const { push, execute } = Pipeline(
 );
 
 
-// For Testing
-const type = "user"
+
 
 exports.handler = async (event) => {
 
