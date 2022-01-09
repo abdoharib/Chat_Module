@@ -1,0 +1,12 @@
+{
+    "Auth":{
+        "forUsers":{
+            "type":["user"],
+            "rules":["MemberOfRoom"]
+        },
+        "forAdmins":{
+            "type":["admin","superadmmin"],
+            "rules":[]
+        }
+    }
+}
