@@ -1,17 +1,17 @@
 const config = require("./config.json");
 const Pipeline = require("../../lib/Middleware/index");
-const Get_Rooms = require("../../lib/helpers/room/get_rooms");
+const Get_Messages = require("../../lib/helpers/message/get_msgs");
 const { GetUsers } = require("../../lib/query/user/index");
-const { GetRooms } = require("../../lib/query/room/index");
+
 
 // For Testing
 const type = "admin";
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
-function GetRooms_config_haneler() {
+function GetMessagesResponse_config_haneler() {
   if (Object.keys(config).length) {
     let { Auth } = config;
-    if (!Auth) throw "Invalid GetRooms Config file Format !!";
+    if (!Auth) throw "Invalid GetMessages Config file Format !!";
 
     for (const RuleName in Auth) {
       if (Auth[RuleName].type.indexOf(type) >= 0) {
@@ -27,7 +27,7 @@ function GetRooms_config_haneler() {
 const { push, execute } = Pipeline(
   //check if MemberOfRoom rule applies and run
   async (ctx) => {
-    return await Get_Rooms.execute(ctx);
+    return await Get_Messages.execute(ctx);
   }
 );
 
@@ -47,15 +47,15 @@ exports.handler = async (event) => {
   try {
     // dont touch this pls
     // (︡❛ ͜ʖ❛︠)💨
-    const rules = GetRooms_config_haneler();
+    const rules = GetMessagesResponse_config_haneler();
 
-    let GetRoomsResponse = await execute({ ...event, rules, type });
-    console.log(GetRoomsResponse);
+    let GetMessagesResponse = await execute({ ...event, rules, type });
+    console.log(GetMessagesResponse);
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
       statusCode: 200,
-      body: GetRoomsResponse ? GetRoomsResponse : {},
+      body: GetMessagesResponse ? GetMessagesResponse : {},
       message: "Here is Your Rooms  👌",
     };
   } catch (error) {
