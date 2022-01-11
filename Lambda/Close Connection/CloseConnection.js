@@ -1,5 +1,5 @@
-const Pipeline = require("../../lib/Middleware/index");
-const DeleteConnection = require("../../lib/helpers/connection/delete")
+const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
+const DeleteConnection = require("/opt/nodejs/node14/lib/helpers/connection/delete")
 
 const axios = require("axios").default
 
@@ -22,6 +22,7 @@ const { push, execute } = Pipeline(
 
 // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
 exports.handler = async (event) => {
+  event[ConnectionsIDs] = event.requestContext.connectionId
 
 
   try {

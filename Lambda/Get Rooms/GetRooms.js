@@ -1,8 +1,8 @@
 const config = require("./config.json");
-const Pipeline = require("../../lib/Middleware/index");
-const Get_Rooms = require("../../lib/helpers/room/get_rooms");
-const { GetUsers } = require("../../lib/query/user/index");
-const { GetRooms } = require("../../lib/query/room/index");
+const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
+const Get_Rooms = require("/opt/nodejs/node14/lib/helpers/room/get_rooms");
+const { GetUsers } = require("/opt/nodejs/node14/lib/query/user/index");
+const { GetRooms } = require("/opt/nodejs/node14/lib/query/room/index");
 
 // For Testing
 const type = "admin";

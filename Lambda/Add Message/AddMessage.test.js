@@ -1,5 +1,6 @@
 let { handler } = require("./AddMessage")
 
+jest.setTimeout(10000)
 
 describe('AddMessage Lambda Test', () => {
    
@@ -9,8 +10,8 @@ describe('AddMessage Lambda Test', () => {
             expect(
                 await handler({
                     content: 'heasfasfasfllo',
-                    userID: '19485',
-                    roomID: '2224',
+                    userID: '4',
+                    roomID: '10',
                 })
             ).toHaveProperty("statusCode", 200);
         })

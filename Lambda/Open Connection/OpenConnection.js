@@ -1,7 +1,12 @@
 const config = require("./config.json");
-const Pipeline = require("../../lib/Middleware/index");
-const { AddUserConnectionIDs } = require("../../lib/query/connections/index")
+const Pipeline = require("./opt/nodejs/node14/lib/Middleware/index");
+const { AddUserConnectionIDs } = require("/opt/nodejs/node14/lib/query/connections/index")
+const { GetUsers } = require("/opt/nodejs/node14/lib/query/user/index")
+
 const axios = require("axios").default
+
+
+
 
 const type = "admin"
 
@@ -25,23 +30,22 @@ function AddConnection_config_haneler(){
 //add connection pipeline
 const { push, execute } = Pipeline(
 
-  
-  // 1
-  // adding the room to dynamo
-  async (ctx) => {
+      //insert connection into the db
+      async (ctx) => {
+        let { ConnectionsIDs } = ctx
+        let Added_Connection = await AddUserConnectionIDs( { ...ctx, /*Note Remove this*/ ConnectionsIDs} )
+        return Added_Connection;
+      }
 
-    let room_added = await AddRoom.execute( ctx )
-
-    return room_added;
-  },
-
-  
 
 );
 
 
 // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
 exports.handler = async (event) => {
+  let { queryStringParameters } = event
+  if(queryStringParameters) queryStringParameters = {...event, ...queryStringParameters };
+  event["ConnectionsIDs"] = event.requestContext.connectionId
 
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
@@ -108,19 +112,13 @@ push(
 
             let users = await GetUsers([ { name:"id", value:userID }, {name:"roomID", value:roomID} ])
           //  console.log(users);
-            if(!users.length) throw "User Not Found in the Room";
+            if(!users.length) throw "You Shall Not Pass || User Not Found in the Room";
     
             ctx.type = users[0].type
         }else{
             //do nothing
             ctx.userID = type || "admin"
         }     
-    },
-
-    //insert connection into the db
-    async (ctx) => {
-        let Added_Connection = await AddUserConnectionIDs( {...ctx, /*Note Remove this*/ ConnectionsIDs:"sfafsafdsafdasfasfafa464684864"} )
-        return Added_Connection;
     }
 )
 

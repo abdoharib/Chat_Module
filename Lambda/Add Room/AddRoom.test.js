@@ -7,6 +7,7 @@ describe('AddRoom Lambda Test', () => {
         test('With Users ', async () => {
             expect(
                 await handler({
+                    id:"54445",
                    users:[
                        {
                            id:"446846",

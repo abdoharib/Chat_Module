@@ -4,8 +4,7 @@ const AddMsg = require("../../lib/helpers/message/add_msg")
 const SendMsg = require("../../lib/helpers/message/send_msg")
 const axios = require("axios").default
 // For Testing
-const type = "user"
-
+const type = "admin"
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
 function AddMessage_config_haneler(){
   if(Object.keys(config).length){
@@ -48,12 +47,16 @@ const { push, execute } = Pipeline(
 
 
 
-exports.handler = async (event) => {
-
+exports.handler = async (event,ctx) => {
+  /*
+  let { body } = event
+  let { headers:{ Authorization }} = event
+  if(body){  body = {...body, Authorization: Authorization || null  }; event = body; }
+  */
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
   try {
-    let AuthResponse = await Authorization(event)
+    let AuthResponse = await _Authorization(event)
   } catch (e) {
     return {
       statusCode: 401,
@@ -68,7 +71,7 @@ exports.handler = async (event) => {
     // (︡❛ ͜ʖ❛︠)💨
     const rules = AddMessage_config_haneler();
 
-    let AddMsgResponse = await execute({ ...event, rules, type });
+    let AddMsgResponse = await execute({ ...event, rules, type, endpoint:"https://ab8wrfl9g7.execute-api.eu-central-1.amazonaws.com/production/" });
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
@@ -148,7 +151,7 @@ push(
 // In this Function you Write your way of Verfing Tokens // if you have one 
 // if user is verfied return any truty variable 
 // if user is unAuthorized then just throw an error
-const Authorization = async( event ) =>{
+const _Authorization = async( event ) =>{
 
   //returns or throws error
   //throw "safasf"

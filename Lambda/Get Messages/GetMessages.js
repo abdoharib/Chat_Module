@@ -1,7 +1,7 @@
 const config = require("./config.json");
-const Pipeline = require("../../lib/Middleware/index");
-const Get_Messages = require("../../lib/helpers/message/get_msgs");
-const { GetUsers } = require("../../lib/query/user/index");
+const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
+const Get_Messages = require("/opt/nodejs/node14/lib/helpers/message/get_msgs");
+const { GetUsers } = require("/opt/nodejs/node14/lib/query/user/index");
 
 
 // For Testing
@@ -56,7 +56,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: GetMessagesResponse ? GetMessagesResponse : {},
-      message: "Here is Your Rooms  👌",
+      message: "Here are Your Messages  👌",
     };
   } catch (error) {
     console.log(error);

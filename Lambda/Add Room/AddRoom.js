@@ -154,7 +154,6 @@ push(
 // if user is verfied return any truty variable 
 // if user is unAuthorized then just throw an error
 const Authorization = async( event ) =>{
-
   //returns or throws error
   //throw "safasf"
   //return {
