@@ -3,10 +3,13 @@ const Pipeline = require("../../lib/Middleware/index");
 const AddMsg = require("../../lib/helpers/message/add_msg")
 const SendMsg = require("../../lib/helpers/message/send_msg")
 const axios = require("axios").default
+axios.defaults.baseURL = 'http://c1c5-102-221-8-18.ngrok.io';
+
 // For Testing
-const type = "admin"
+
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
-function AddMessage_config_haneler(){
+function AddMessage_config_haneler(event){
+  let { type } = event
   if(Object.keys(config).length){
       let { Auth } = config
       if(!Auth) throw "Invalid AddMessage Config file Format !!";
@@ -28,6 +31,13 @@ const { push, execute } = Pipeline(
   // 1
   // adding the message to dynamo
   async (ctx) => {
+    
+     ctx.author = {
+      id:ctx.userID,
+      type:ctx.type || ""
+  }
+  //return ctx
+  
     let msg_added = await AddMsg.execute( ctx )
     ctx.msg = msg_added
     // dont forget to comment this
@@ -36,6 +46,7 @@ const { push, execute } = Pipeline(
 
   // 2
   //sending the msg to the connected users
+ 
   async (ctx) => {
     let response_send = await SendMsg.execute( ctx )
     return response_send;
@@ -48,11 +59,11 @@ const { push, execute } = Pipeline(
 
 
 exports.handler = async (event,ctx) => {
-  /*
+  
   let { body } = event
   let { headers:{ Authorization }} = event
-  if(body){  body = {...body, Authorization: Authorization || null  }; event = body; }
-  */
+  if(body){  body = {...body, Authorization  }; event = body; }
+  
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
   try {
@@ -61,7 +72,7 @@ exports.handler = async (event,ctx) => {
     return {
       statusCode: 401,
       body: {} ,
-      message: "Unauthorized",
+      message: e,
     }
   }
 
@@ -69,9 +80,9 @@ exports.handler = async (event,ctx) => {
 
     // dont touch this pls 
     // (︡❛ ͜ʖ❛︠)💨
-    const rules = AddMessage_config_haneler();
+    const rules = AddMessage_config_haneler(event);
 
-    let AddMsgResponse = await execute({ ...event, rules, type, endpoint:"https://ab8wrfl9g7.execute-api.eu-central-1.amazonaws.com/production/" });
+    let AddMsgResponse = await execute({ ...event, rules, endpoint:"https://ab8wrfl9g7.execute-api.eu-central-1.amazonaws.com/production/" });
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
@@ -151,12 +162,43 @@ push(
 // In this Function you Write your way of Verfing Tokens // if you have one 
 // if user is verfied return any truty variable 
 // if user is unAuthorized then just throw an error
-const _Authorization = async( event ) =>{
+const _Authorization = async (event) => {
+  
+  let { Authorization } = event
 
-  //returns or throws error
-  //throw "safasf"
-  //return {
-    
-  //}
+  const RoleToTypeMapping = {
+    customer: "user",
+    "sub_admin": "admin",
+    "admin": "admin"
+  }
+
+
+    let auth_response = await axios.get("/api/auth/me", {
+      headers: {
+        "Authorization": Authorization
+      }
+    }).catch(e => {
+      //console.log(e);
+      throw "UnAuthorized 💩"
+    })
+
+
+  try {
+    let _user_info = auth_response.data
+    let { id, roles } = _user_info
+
+    //if (!_user_info || !id || !roles || !roles.length || !roles.length < 1 || !roles[0].name || typeof !roles[0].name !== "string") throw "Error in Authorization  💩"
+    let _role_name = roles[0].name
+
+    let _type = RoleToTypeMapping[_role_name];
+    // if (!_type) throw "Error in Authorization  💩"
+
+    event.userID = id
+    event.type = _type
+
+  } catch (e) {
+   // console.log(e);
+    throw "Error in Authorization  💩"
+  }
+
 }
-

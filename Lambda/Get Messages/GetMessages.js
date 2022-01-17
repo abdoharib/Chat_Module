@@ -1,14 +1,15 @@
 const config = require("./config.json");
-const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
-const Get_Messages = require("/opt/nodejs/node14/lib/helpers/message/get_msgs");
-const { GetUsers } = require("/opt/nodejs/node14/lib/query/user/index");
-
+const Pipeline = require("../../lib/Middleware/index");
+const Get_Messages = require("../../lib/helpers/message/get_msgs");
+const { GetUsers } = require("../../lib/query/user/index");
+const axios = require("axios").default
+axios.defaults.baseURL = 'http://c1c5-102-221-8-18.ngrok.io';
 
 // For Testing
-const type = "admin";
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
-function GetMessagesResponse_config_haneler() {
+function GetMessagesResponse_config_haneler(event) {
+  let {type } = event
   if (Object.keys(config).length) {
     let { Auth } = config;
     if (!Auth) throw "Invalid GetMessages Config file Format !!";
@@ -27,36 +28,46 @@ function GetMessagesResponse_config_haneler() {
 const { push, execute } = Pipeline(
   //check if MemberOfRoom rule applies and run
   async (ctx) => {
-    return await Get_Messages.execute(ctx);
+    let msgs = await Get_Messages.execute(ctx);
+    ctx.msgs = msgs
+  },
+  async (ctx) => {
+    let { msgs } = ctx
+    msgs.sort((a,b) => parseInt(b.time)-parseInt(a.time))
+    return msgs;
   }
 );
 
 exports.handler = async (event) => {
+  console.log(event);
+    let { body } = event
+  let { headers:{ Authorization }} = event
+  if(body){  body = {...body, Authorization  }; event = body; }
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
   try {
-    let AuthResponse = await Authorization(event);
+    let AuthResponse = await _Authorization(event);
   } catch (e) {
     return {
       statusCode: 401,
       body: {},
-      message: "Unauthorized",
+      message: e,
     };
   }
 
   try {
     // dont touch this pls
     // (︡❛ ͜ʖ❛︠)💨
-    const rules = GetMessagesResponse_config_haneler();
+    const rules = GetMessagesResponse_config_haneler(event);
 
-    let GetMessagesResponse = await execute({ ...event, rules, type });
+    let GetMessagesResponse = await execute({ ...event, rules });
     console.log(GetMessagesResponse);
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
       statusCode: 200,
       body: GetMessagesResponse ? GetMessagesResponse : {},
-      message: "Here are Your Messages  👌",
+      message: "Here is Your Messages  👌",
     };
   } catch (error) {
     console.log(error);
@@ -123,12 +134,52 @@ push(
 // In this Function you Write your way of Verfing Tokens // if you have one
 // if user is verfied return any truty variable
 // if user is unAuthorized then just throw an error
-const Authorization = async (event) => {
+const _Authorization = async (event) => {
+let {Authorization}= event
+  const RoleToTypeMapping = {
+    customer: "user",
+    "sub_admin": "admin",
+    "admin": "admin"
+  }
+
+
+    let auth_response = await axios.get("/api/auth/me", {
+      headers: {
+        "Authorization": Authorization
+      }
+    }).catch(e => {
+      //console.log(e);
+      throw "UnAuthorized 💩"
+    })
+
+
+  try {
+    let _user_info = auth_response.data
+    let { id, roles } = _user_info
+
+    //if (!_user_info || !id || !roles || !roles.length || !roles.length < 1 || !roles[0].name || typeof !roles[0].name !== "string") throw "Error in Authorization  💩"
+    let _role_name = roles[0].name
+
+    let _type = RoleToTypeMapping[_role_name];
+    // if (!_type) throw "Error in Authorization  💩"
+
+    event.userID = id
+    event.type = _type
+
+  } catch (e) {
+   // console.log(e);
+    throw "Error in Authorization  💩"
+  }
+
+
+
+
   //returns or throws error
   //throw "safasf"
   //return {
+
   //}
-};
+}
 
 push(
 	

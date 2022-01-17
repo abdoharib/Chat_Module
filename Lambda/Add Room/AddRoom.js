@@ -2,13 +2,15 @@ const config = require("./config.json");
 const Pipeline = require("../../lib/Middleware/index");
 const AddRoom = require("../../lib/helpers/room/add_room")
 const axios = require("axios").default
-// For Testing
+axios.defaults.baseURL = 'http://c1c5-102-221-8-18.ngrok.io';
 
+// For Testing
 const type = "admin"
 
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
-function AddRoom_config_haneler(){
+function AddRoom_config_haneler(event){
+  let { type } = event
   if(Object.keys(config).length){
       let { Auth } = config
       if(!Auth) throw "Invalid AddRoom Config file Format !!";
@@ -45,16 +47,20 @@ const { push, execute } = Pipeline(
 
 
 exports.handler = async (event) => {
-
+  
+  let { body } = event
+  let { headers }= event
+  let { Authorization } = headers
+  if(body){  body = {...body, Authorization, API_KEY:headers["x-api-key"]  }; event = body; }
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
   try {
-    let AuthResponse = await Authorization(event)
+    let AuthResponse = await _Authorization(event)
   } catch (e) {
     return {
       statusCode: 401,
       body: {} ,
-      message: "Unauthorized",
+      message: e,
     }
   }
 
@@ -62,9 +68,9 @@ exports.handler = async (event) => {
 
     // dont touch this pls 
     // (︡❛ ͜ʖ❛︠)💨
-    const rules = AddRoom_config_haneler();
+    const rules = AddRoom_config_haneler(event);
 
-    let AddRoomResponse = await execute({ ...event, rules, type });
+    let AddRoomResponse = await execute({ ...event, rules });
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
@@ -153,11 +159,8 @@ push(
 // In this Function you Write your way of Verfing Tokens // if you have one 
 // if user is verfied return any truty variable 
 // if user is unAuthorized then just throw an error
-const Authorization = async( event ) =>{
-  //returns or throws error
-  //throw "safasf"
-  //return {
-    
-  //}
+const _Authorization = async (event) => {
+  event.type = type;
 }
+
 

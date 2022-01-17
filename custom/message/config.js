@@ -1,4 +1,13 @@
-let Models = []
+let Models = [
+    {
+        Name:"author",
+        Type:"object",
+        Validator: (val) =>{
+            console.log(val.hasOwnProperty("type") && val.hasOwnProperty("id"));
+            return val.hasOwnProperty("type") && val.hasOwnProperty("id")
+        }  
+    }
+]
 
 
 

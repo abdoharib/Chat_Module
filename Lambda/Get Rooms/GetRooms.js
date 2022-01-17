@@ -1,14 +1,19 @@
 const config = require("./config.json");
-const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
-const Get_Rooms = require("/opt/nodejs/node14/lib/helpers/room/get_rooms");
-const { GetUsers } = require("/opt/nodejs/node14/lib/query/user/index");
-const { GetRooms } = require("/opt/nodejs/node14/lib/query/room/index");
+const Pipeline = require("../../lib/Middleware/index");
+const Get_Rooms = require("../../lib/helpers/room/get_rooms");
+const { GetUsers } = require("../../lib/query/user/index");
+const { GetRooms } = require("../../lib/query/room/index");
+const axios = require("axios").default
+axios.defaults.baseURL = 'http://c1c5-102-221-8-18.ngrok.io';
+
+
+
 
 // For Testing
-const type = "admin";
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
-function GetRooms_config_haneler() {
+function GetRooms_config_haneler(event) {
+  let { type } = event
   if (Object.keys(config).length) {
     let { Auth } = config;
     if (!Auth) throw "Invalid GetRooms Config file Format !!";
@@ -27,30 +32,69 @@ function GetRooms_config_haneler() {
 const { push, execute } = Pipeline(
   //check if MemberOfRoom rule applies and run
   async (ctx) => {
-    return await Get_Rooms.execute(ctx);
+    ctx.rooms = await Get_Rooms.execute(ctx);
+  },
+  
+  async (ctx) => {
+    let {rooms} = ctx
+
+    for await (let room of rooms) {
+      let users = await GetUsers([{ name: "roomID", value: room.id }]);
+  
+      
+      if (Array.isArray(users) ){
+
+        for await (let user of users) {
+          let {data} = await axios.get("https://api.almithaly.ly/chat/users/"+user.id || 0,{
+            headers:{
+              'x-api-key':"abc0135e-d748-452b-8729-2b16b33bd4f4"
+            }
+          }).catch(e => {
+            if(JSON.stringify(e).indexOf("404") !== -1) throw "User INFO Not Found"
+          }) 
+          console.log(data); 
+          user.info = data  
+        }
+
+        room.users = [
+          ...users
+        ]
+
+      }else { room.users = [ users ] }
+
+    }
+    return rooms
+
   }
+
 );
 
 exports.handler = async (event) => {
+  
+  let { body } = event
+  let { headers:{ Authorization }} = event
+  if(body){  body = {...body, Authorization  }; event = body; }
+  
   // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
   // Running the Authorization
   try {
-    let AuthResponse = await Authorization(event);
+    let AuthResponse = await _Authorization(event);
   } catch (e) {
+    console.log(e);
     return {
       statusCode: 401,
       body: {},
-      message: "Unauthorized",
+      message: e,
     };
   }
 
   try {
     // dont touch this pls
     // (︡❛ ͜ʖ❛︠)💨
-    const rules = GetRooms_config_haneler();
+    const rules = GetRooms_config_haneler(event);
 
-    let GetRoomsResponse = await execute({ ...event, rules, type });
-    console.log(GetRoomsResponse);
+    let GetRoomsResponse = await execute({ ...event, rules });
+    console.log(GetRoomsResponse[0].users);
 
     // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
     return {
@@ -123,12 +167,56 @@ push(
 // In this Function you Write your way of Verfing Tokens // if you have one
 // if user is verfied return any truty variable
 // if user is unAuthorized then just throw an error
-const Authorization = async (event) => {
+const _Authorization = async (event) => {
+  /*
+let {Authorization}= event
+console.log(Authorization);
+  const RoleToTypeMapping = {
+    customer: "user",
+    "sub_admin": "admin",
+    "admin": "admin"
+  }
+
+
+    let auth_response = await axios.get("/api/auth/me", {
+      headers: {
+        "Authorization": Authorization
+      }
+    }).catch(e => {
+      console.log(e);
+      throw "UnAuthorized 💩"
+    })
+
+
+  try {
+    let _user_info = auth_response.data
+    let { id, roles } = _user_info
+
+    //if (!_user_info || !id || !roles || !roles.length || !roles.length < 1 || !roles[0].name || typeof !roles[0].name !== "string") throw "Error in Authorization  💩"
+    let _role_name = roles[0].name
+
+    let _type = RoleToTypeMapping[_role_name];
+    // if (!_type) throw "Error in Authorization  💩"
+
+    event.userID = id
+    event.type = _type
+
+  } catch (e) {
+   // console.log(e);
+  throw "Error in Authorization  💩" 
+  }
+
+
+
+
   //returns or throws error
   //throw "safasf"
   //return {
-  //}
-};
+
+  //}*/
+  event.type = "admin"
+}
+
 
 push(
 	

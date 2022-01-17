@@ -9,7 +9,7 @@ describe("GetMessages Lambda Test", () => {
                 })
             ).toHaveProperty("statusCode", 200);
         })
-*/
+*//*
   test("Messages ByUserID", async () => {
     expect(
       await handler({
@@ -20,16 +20,21 @@ describe("GetMessages Lambda Test", () => {
         },
       })
     ).toHaveProperty("statusCode", 200);
-  });
+  });*/
 
   test("Messages ByRoomID", async () => {
     expect(
       await handler({
-        Filter: {
-          ByRoom: {
-            id: "safasf",
-          },
+        headers:{
+          Authorization:"Bearer 21|WUo6LW6JNUJvMBvAsQlCR9yTELOGkCrmQQ7rMBUu"
         },
+        body:{
+          Filter: {
+            ByRoom: {
+              id: "10",
+            },
+          }
+        }
       })
     ).toHaveProperty("statusCode", 200);
   });
