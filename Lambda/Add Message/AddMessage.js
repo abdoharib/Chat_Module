@@ -2,8 +2,9 @@ const config = require("./config.json");
 const Pipeline = require("../../lib/Middleware/index");
 const AddMsg = require("../../lib/helpers/message/add_msg")
 const SendMsg = require("../../lib/helpers/message/send_msg")
+const Update_Room = require("../../lib/helpers/room/update_room");
 const axios = require("axios").default
-axios.defaults.baseURL = 'http://c1c5-102-221-8-18.ngrok.io';
+axios.defaults.baseURL = 'http://6d68-102-221-8-18.ngrok.io';
 
 // For Testing
 
@@ -49,9 +50,48 @@ const { push, execute } = Pipeline(
  
   async (ctx) => {
     let response_send = await SendMsg.execute( ctx )
-    return response_send;
+    ctx.response_send = response_send;
     
+  },
+
+  async (ctx) => {
+
+    //s
+
+    console.log(ctx)
+    const props = {
+      Filter: {
+        ByRoom: {
+          id: ctx.roomID
+        },
+      },
+      Update:[
+        {
+          name:"latestUpdate",
+          value:new Date().getTime().toString()
+        }
+      ]
+    }
+ 
+    await Update_Room.execute(props);
+
+    await axios.post("/chat/notify",{
+      "sender":ctx.userID || "admin",
+      "reciver":'1',
+      "title":"رسالة جديد : "+ctx.roomID,
+      "message":ctx.response_send.content,
+      "dataID":"9",
+      "type":"chat"
+  },
+  {
+    headers:{
+      "x-api-key":"abc0135e-d748-452b-8729-2b16b33bd4f4"
+    }
+  })
+
+    return ctx.response_send;;
   }
+
 
 );
 
