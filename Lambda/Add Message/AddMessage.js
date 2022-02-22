@@ -1,12 +1,19 @@
 const config = require("./config.json");
-const Pipeline = require("../../lib/Middleware/index");
-const AddMsg = require("../../lib/helpers/message/add_msg")
-const SendMsg = require("../../lib/helpers/message/send_msg")
-const Update_Room = require("../../lib/helpers/room/update_room");
+const Pipeline = require("/opt/nodejs/node14/lib/Middleware/index");
+const AddMsg = require("/opt/nodejs/node14/lib/helpers/message/add_msg")
+const SendMsg = require("/opt/nodejs/node14/lib/helpers/message/send_msg")
+const Update_Room = require("/opt/nodejs/node14/lib/helpers/room/update_room");
+const crypto = require("crypto")
+const S3_URL = "https://alm-chat-assets.s3.eu-central-1.amazonaws.com"
+
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3"); // ES Modules import
+let s3client = new S3Client();
+
 const axios = require("axios").default
-axios.defaults.baseURL = 'http://6d68-102-221-8-18.ngrok.io';
+axios.defaults.baseURL = 'https://api.almithaly.ly/';
 
 // For Testing
+
 
 // don't touch this pls // (︡❛ ͜ʖ❛︠)💨
 function AddMessage_config_haneler(event){
@@ -28,8 +35,76 @@ function AddMessage_config_haneler(event){
 // dont touch this pls // (︡❛ ͜ʖ❛︠)💨
 //add message pipeline
 const { push, execute } = Pipeline(
+  
+  //1
+  // Checking if its A File Or Text & Saving to S3
+  async (ctx) => {
+    if(ctx["file_type"] || ctx["file_type"]!=="text" ){
 
-  // 1
+
+      //Extracting the format from the content & Validating it 
+      ///////////////////////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////////////////////
+     
+      ///////////////////// Extract Start /////////////
+      const ValidFormats = ["pdf","docx", "png", "jpg", "jpeg","txt"]
+
+      // result would be [ "data:text/html", "%3Ch1%3EHello%2C%20World%21%3C%2Fh1%"]
+      let [ format, content ] = ctx.content.split(";base64,")
+
+      // result would be [ "data:text", "html"]
+      let type = format.split('/')[1]
+      ///////////////////// Extract END /////////////
+
+
+      ///////////////////// Validation Start /////////////
+      // if empty string throw error
+      if(!type) throw "Unkown Format";
+      if(ValidFormats.indexOf(type)<0) throw "Not A Valid Format"
+      if(ctx.content === null || !ctx.content) throw "No Content to Save"
+      ///////////////////// Validation END /////////////
+
+
+      ///////////////////////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////////////////////
+
+
+      //Saving to S3 & Updating the ctx.content to the S3 Path
+      /////////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////
+
+      /////////// Saving to S3 START ///////////
+      let _File_ID =  crypto.randomUUID()
+      await s3client.send(new PutObjectCommand({
+        Bucket:'alm-chat-assets',
+        Body:Buffer.from(content, "base64"),
+        Key:`${_File_ID}.${type}`,
+        ContentType: format.split("data:")[1],
+        ACL:"public-read"
+      }))
+      /////////// Saving to S3 END ///////////
+
+
+
+      /////////// Updating Content Start ///////////
+      ctx.content = `${S3_URL}/${_File_ID}.${type}`
+      /////////// Updating Content END ///////////
+      
+
+      /////////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////
+      
+
+
+    }else{
+      //default type if no type was givin 
+      ctx["file_type"] = "text"
+    }
+
+  },
+
+
+  // 2
   // adding the message to dynamo
   async (ctx) => {
     
@@ -45,19 +120,17 @@ const { push, execute } = Pipeline(
     //return msg_added;
   },
 
-  // 2
+  // 3
   //sending the msg to the connected users
- 
   async (ctx) => {
     let response_send = await SendMsg.execute( ctx )
     ctx.response_send = response_send;
     
   },
-
+  
+  //4
+  //updating the room lattest update & sending notification
   async (ctx) => {
-
-    //s
-
     console.log(ctx)
     const props = {
       Filter: {
@@ -74,13 +147,15 @@ const { push, execute } = Pipeline(
     }
  
     await Update_Room.execute(props);
-
-    await axios.post("/chat/notify",{
+    console.log(ctx)
+    
+    if(ctx.type == "admin"){
+          await axios.post("/chat/notify",{
       "sender":ctx.userID || "admin",
-      "reciver":'1',
+      "reciver": ctx.type !== "admin"?"admins": "admins",//ctx.RoomUsers[0].id,
       "title":"رسالة جديد : "+ctx.roomID,
       "message":ctx.response_send.content,
-      "dataID":"9",
+      "dataID":"ctx.roomID",
       "type":"chat"
   },
   {
@@ -88,10 +163,11 @@ const { push, execute } = Pipeline(
       "x-api-key":"abc0135e-d748-452b-8729-2b16b33bd4f4"
     }
   })
+    }
 
+  
     return ctx.response_send;;
   }
-
 
 );
 

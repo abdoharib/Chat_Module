@@ -6,8 +6,30 @@ let Models = [
             console.log(val.hasOwnProperty("type") && val.hasOwnProperty("id"));
             return val.hasOwnProperty("type") && val.hasOwnProperty("id")
         }  
+    },
+    {
+        Name:"file_type",
+        Type:"string",
+        Required: true,
+        Validator: (val) =>{
+            if(val === "file" || val === "text") return true;
+            return false;
+        }  
     }
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
